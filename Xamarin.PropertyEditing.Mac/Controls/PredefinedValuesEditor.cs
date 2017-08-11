@@ -11,7 +11,6 @@ using Xamarin.PropertyEditing.ViewModels;
 using System.Collections.Generic;
 using ObjCRuntime;
 using System.Linq;
-using System.Collections.ObjectModel;
 using Xamarin.PropertyEditing.Reflection;
 
 namespace Xamarin.PropertyEditing.Mac
@@ -108,7 +107,8 @@ namespace Xamarin.PropertyEditing.Mac
 						var BooleanEditor = new NSButton (new CGRect (0, top, 200, 24)) { TranslatesAutoresizingMaskIntoConstraints = false };
 						BooleanEditor.SetButtonType (NSButtonType.Switch);
 						BooleanEditor.Title = item.Key;
-						BooleanEditor.State = item.Value.Checked ? NSCellStateValue.On : NSCellStateValue.Off;
+						var ticked = (Convert.ToInt64 (item.Value) & Convert.ToInt64 (EditorViewModel.Value)) == Convert.ToInt64 (item.Value);
+						BooleanEditor.State = ticked ? NSCellStateValue.On : NSCellStateValue.Off;
 						BooleanEditor.Activated += BooleanEditor_Activated;
 
 						AddSubview (BooleanEditor);
@@ -143,15 +143,24 @@ namespace Xamarin.PropertyEditing.Mac
 		void BooleanEditor_Activated (object sender, EventArgs e)
 		{
 			var buttonTitles = combinableList.Where (y => y.State == NSCellStateValue.On).Select (x => x.Title);
+
 			T realValue = default (T);
 			Func<T, T, T> or = DynamicBuilder.GetOrOperator<T> ();
 			foreach (var pvalue in EditorViewModel.PossibleValues) {
 				foreach (var title in buttonTitles) {
 					if (pvalue.Key == title) {
-						realValue = or (realValue, pvalue.Value.Value);
+						realValue = or (realValue, pvalue.Value);
 					}
 				}
 			}
+
+			/* Int64 realValue = 0;
+			foreach (var title in buttonTitles) {
+				realValue += Convert.ToInt64 (EditorViewModel.PossibleValues[title]);
+
+			}
+			EditorViewModel.Value = (T)Convert.ChangeType (realValue, typeof (T));
+			*/
 
 			EditorViewModel.Value = realValue;
 			dataPopulated = false;
@@ -161,7 +170,9 @@ namespace Xamarin.PropertyEditing.Mac
 		{
 			if (EditorViewModel.IsCombinable) {
 				foreach (var item in combinableList) {
-					item.State = EditorViewModel.PossibleValues[item.Title].Checked ? NSCellStateValue.On : NSCellStateValue.Off;
+					var value = EditorViewModel.PossibleValues[item.Title];
+					var ticked = (Convert.ToInt64 (value) & Convert.ToInt64 (EditorViewModel.Value)) == Convert.ToInt64 (value);
+					item.State = ticked ? NSCellStateValue.On : NSCellStateValue.Off;
 				}
 			} else {
 				this.comboBox.StringValue = EditorViewModel.ValueName ?? String.Empty;

@@ -26,14 +26,15 @@ namespace Xamarin.PropertyEditing.ViewModels
 		public TValue Value
 		{
 			get { return (this.value != null) ? this.value.Value : default(TValue); }
-			set
-			{
-				value = ValidateValue (value);
-				SetValue (new ValueInfo<TValue> {
-					Source = ValueSource.Local,
-					Value = value
-				});
-                OnPropertyChanged ();
+			set {
+				if (!this.value.Value.Equals (value)) {
+					value = ValidateValue (value);
+					SetValue (new ValueInfo<TValue> {
+						Source = ValueSource.Local,
+						Value = value
+					});
+					OnPropertyChanged ();
+				}
 			}
 		}
 

@@ -25,8 +25,8 @@ namespace Xamarin.PropertyEditing.ViewModels
 			get { return this.predefinedValues.IsValueCombinable; }
 		}
 
-		IReadOnlyDictionary<string, ValueChecked> possibleValues;
-		public IReadOnlyDictionary<string, ValueChecked> PossibleValues
+		IReadOnlyDictionary<string, TValue> possibleValues;
+		public IReadOnlyDictionary<string, TValue> PossibleValues
 		{
 			get { return this.possibleValues; }
 		}
@@ -80,7 +80,7 @@ namespace Xamarin.PropertyEditing.ViewModels
 		private bool IsValueDefined (TValue value)
 		{
 			if (IsCombinable) {
-				return Enum.ToObject (Property.Type, value) != null;
+				return (Convert.ToInt64 (value) & Convert.ToInt64 (Value)) != 0;
 			} else {
 				return this.predefinedValues.PredefinedValues.Values.Contains (value);
 			}
@@ -111,17 +111,7 @@ namespace Xamarin.PropertyEditing.ViewModels
 
 		void UpdatePossibleValues ()
 		{
-			if (IsCombinable) {
-				possibleValues = this.predefinedValues.PredefinedValues.ToDictionary (x => x.Key, y => new ValueChecked { Value = y.Value, Checked = (Convert.ToInt64 (y.Value) & Convert.ToInt64 (this.Value)) == Convert.ToInt64 (y.Value) });
-			} else {
-				possibleValues = this.predefinedValues.PredefinedValues.ToDictionary (x => x.Key, y => new ValueChecked ());
-			}
-		}
-
-		public class ValueChecked
-		{
-			public TValue Value;
-			public bool Checked;
+			possibleValues = this.predefinedValues.PredefinedValues.ToDictionary (x => x.Key, y => y.Value);
 		}
 	}
 }
