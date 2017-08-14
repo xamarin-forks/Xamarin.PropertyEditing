@@ -135,9 +135,20 @@ namespace Xamarin.PropertyEditing.Tests
 		public async Task SetValueAsync<T> (IPropertyInfo property, ValueInfo<T> value, PropertyVariation variation = null)
 		{
 			if (variation != null)
-				throw new NotSupportedException(); // TODO
+				throw new NotSupportedException (); // TODO
 
-			if (value.Source != ValueSource.Local && ValueEvaluator != null) {
+			if (typeof (T) == typeof (IReadOnlyList<int>)) {
+				var val = value.Value as IReadOnlyList<int>;
+				int combinable = 0;
+				foreach (var item in val) {
+					combinable |= item;
+				}
+
+				this.values[property] = new ValueInfo<int> {
+					Source = ValueSource.Local,
+					Value = combinable
+				};
+			} else if (value.Source != ValueSource.Local && ValueEvaluator != null) {
 				value.Value = (T)ValueEvaluator (property, value.ValueDescriptor);
 			} else if (value.Source == ValueSource.Unset || (SupportsDefault && Equals (value.Value, default(T))) && value.ValueDescriptor == null) {
 				this.values.Remove (property);

@@ -149,6 +149,11 @@ namespace Xamarin.PropertyEditing.Tests
 
 		protected abstract string GetOutOfBoundsValueName ();
 
+		protected override PredefinedValuesViewModel<T> GetViewModel (TargetPlatform platform, IPropertyInfo property, IEnumerable<IObjectEditor> editors)
+		{
+			return new PredefinedValuesViewModel<T> (platform, property, editors);
+		}
+
 		[Test]
 		public void SetValueOutOfBounds ()
 		{
@@ -239,5 +244,127 @@ namespace Xamarin.PropertyEditing.Tests
 		private readonly IReadOnlyDictionary<string, int> predefinedValues;
 		private readonly int[] values;
 		private readonly string[] names;
+	}
+
+	internal abstract class AbdstractCombinableEnumPredefinedViewModelTests<T>
+		: ConstrainedPredefinedValuesViewModelTests<T>
+	{
+		protected abstract List<string> GetRandomTestValueList ();
+
+		protected override void AugmentPropertyMock (Mock<IPropertyInfo> propertyMock)
+		{
+			base.AugmentPropertyMock (propertyMock);
+			var predefined = propertyMock.As<IHavePredefinedValues<T>> ();
+			predefined.SetupGet (h => h.IsValueCombinable).Returns (true);
+		}
+
+		[Test]
+		public void HasValueChangedWhenSetViaValueList ()
+		{
+			List<string> originalValueList;
+			do {
+				originalValueList = GetRandomTestValueList ();
+			} while (originalValueList.Count < 2);
+
+			var vm = GetBasicTestModel ();
+
+			vm.ValueList = originalValueList;
+			var originalValue = vm.Value;
+
+			bool changed = false;
+			vm.PropertyChanged += (sender, args) => {
+				if (args.PropertyName == nameof (vm.Value))
+					changed = true;
+			};
+
+			originalValueList.Remove (originalValueList[originalValueList.Count - 1]);
+			var newValueList = originalValueList;
+			vm.ValueList = newValueList;
+
+			Assert.That (changed, Is.True);
+			Assert.That (vm.Value, !Is.EqualTo (originalValue));
+		}
+
+		[Test]
+		public async Task GetCheckedValues ()
+		{
+			var originalValueList = GetRandomTestValueList ();
+			var vm = GetBasicTestModel ();
+
+			vm.ValueList = originalValueList;
+
+			var value = await vm.GetValues ();
+
+			Assert.That (value, !Is.Null);
+			Assert.That (value.Count, Is.GreaterThan (0));
+		}
+	}
+
+	[TestFixture]
+	internal class CombinableEnumPredefinedViewModelTests
+		: AbdstractCombinableEnumPredefinedViewModelTests<int>
+	{
+		private readonly int[] values;
+		private readonly string[] names;
+
+		IReadOnlyDictionary<string, int> predefinedValues;
+		protected override IReadOnlyDictionary<string, int> Values => this.predefinedValues;
+
+		public CombinableEnumPredefinedViewModelTests ()
+		{
+			this.names = Enum.GetNames (typeof (FlagsTestEnum));
+			this.values = (int[])Enum.GetValues (typeof (FlagsTestEnum));
+
+			var vp = new Dictionary<string, int> (names.Length);
+			for (int i = 0; i < names.Length; i++) {
+				vp.Add (names[i], values[i]);
+			}
+
+			predefinedValues = vp;
+		}
+
+		protected override string GetOutOfBoundsValueName ()
+		{
+			return "foo";
+		}
+
+		protected override int GetOutOfBoundsValue ()
+		{
+			return 16;
+		}
+
+		protected override int GetRandomTestValue (Random rand)
+		{
+			int index = rand.Next (0, values.Length - 1);
+			int value = values[index];
+			if (index > 0) {
+				int flags = rand.Next (0, values.Length - 1);
+				for (int i = 0; i < flags; i++) {
+					value |= values[rand.Next (1, values.Length - 1)];
+				}
+			}
+
+			return value;
+		}
+
+		protected override List<string> GetRandomTestValueList ()
+		{
+			var rand = new Random (int.MaxValue);
+			int index = rand.Next (0, values.Length - 1);
+			var value = new List<string> ();
+			if (index > 0) {
+				int flags = rand.Next (0, values.Length - 1);
+				for (int i = 0; i < flags; i++) {
+					value.Add (names[rand.Next (1, values.Length - 1)]);
+				}
+			}
+
+			return value;
+		}
+
+		protected override PredefinedValuesViewModel<int> GetViewModel (TargetPlatform platform, IPropertyInfo property, IEnumerable<IObjectEditor> editors)
+		{
+			return new PredefinedValuesViewModel<int> (platform, property, editors);
+		}
 	}
 }

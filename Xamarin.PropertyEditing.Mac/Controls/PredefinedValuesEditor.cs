@@ -3,18 +3,29 @@ using System.Collections;
 using System.Diagnostics;
 using System.ComponentModel;
 
+using ObjCRuntime;
 using Foundation;
 using AppKit;
 using CoreGraphics;
 
 using Xamarin.PropertyEditing.ViewModels;
 using Xamarin.PropertyEditing.Mac.Resources;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Xamarin.PropertyEditing.Mac
 {
 	internal class PredefinedValuesEditor<T>
 		: PropertyEditorControl
 	{
+		const string setBezelColorSelector = "setBezelColor:";
+
+		private readonly NSComboBox comboBox;
+		List<NSButton> combinableList = new List<NSButton> ();
+		bool dataPopulated;
+		NSView firstKeyView;
+		NSView lastKeyView;
+
 		public PredefinedValuesEditor ()
 		{
 			base.TranslatesAutoresizingMaskIntoConstraints = false;
@@ -28,9 +39,7 @@ namespace Xamarin.PropertyEditing.Mac
 				Font = NSFont.FromFontName(DefaultFontName, DefaultFontSize),
 			};
 
-			this.comboBox.SelectionChanged += (sender, e) => {
-				EditorViewModel.ValueName = comboBox.SelectedValue.ToString ();
-			};
+            this.comboBox.SelectionChanged += SelectionChanged;
 
 			this.popUpButton = new NSPopUpButton {
 				TranslatesAutoresizingMaskIntoConstraints = false,
@@ -51,16 +60,12 @@ namespace Xamarin.PropertyEditing.Mac
 
 		public override NSView FirstKeyView => firstKeyView;
 		public override NSView LastKeyView => lastKeyView;
+		public List<NSButton> CombinableList => this.combinableList;
 
 		protected PredefinedValuesViewModel<T> EditorViewModel => (PredefinedValuesViewModel<T>)ViewModel;
 
-		readonly NSComboBox comboBox;
 		readonly NSPopUpButton popUpButton;
 		NSMenu popupButtonList;
-
-		bool dataPopulated;
-		NSView firstKeyView;
-		NSView lastKeyView;
 
 		protected override void HandleErrorsChanged (object sender, DataErrorsChangedEventArgs e)
 		{
@@ -69,43 +74,67 @@ namespace Xamarin.PropertyEditing.Mac
 
 		protected override void SetEnabled ()
 		{
-			if (EditorViewModel.IsConstrainedToPredefined) {
-				this.popUpButton.Enabled = ViewModel.Property.CanWrite;
+			if (EditorViewModel.IsCombinable) {
+				foreach (var item in combinableList) {
+					item.Enabled = ViewModel.Property.CanWrite;
+				}
 			} else {
-				this.comboBox.Enabled = ViewModel.Property.CanWrite;
+				this.comboBox.Editable = ViewModel.Property.CanWrite;
 			}
 		}
 
 		protected override void UpdateErrorsDisplayed (IEnumerable errors)
 		{
-			if (ViewModel.HasErrors) {
-				SetErrors (errors);
+			if (EditorViewModel.IsCombinable) {
+				foreach (var item in combinableList) {
+					if (ViewModel.HasErrors) {
+						if (item.RespondsToSelector (new Selector (setBezelColorSelector))) {
+							item.BezelColor = NSColor.Red;
+						}
+					} else {
+						if (item.RespondsToSelector (new Selector (setBezelColorSelector))) {
+							item.BezelColor = NSColor.Clear;
+						}
+					}
+				}
 			} else {
-				SetErrors (null);
-				SetEnabled ();
+				if (ViewModel.HasErrors) {
+					this.comboBox.BackgroundColor = NSColor.Red;
+				} else {
+					comboBox.BackgroundColor = NSColor.Clear;
+				}
 			}
+
+			Debug.WriteLine ("Your input triggered an error:");
+			foreach (var error in errors) {
+				Debug.WriteLine (error.ToString () + "\n");
+			}
+
+			SetEnabled ();
 		}
 
 		protected override void OnViewModelChanged (PropertyViewModel oldModel)
 		{
 			if (!dataPopulated) {
-				if (EditorViewModel.IsConstrainedToPredefined) {
-					this.popupButtonList.RemoveAllItems ();
-					foreach (string item in EditorViewModel.PossibleValues) {
-						popupButtonList.AddItem (new NSMenuItem (item));
+				if (EditorViewModel.IsCombinable) {
+					combinableList.Clear ();
+
+					var top = 0;
+					foreach (var item in EditorViewModel.PossibleValues) {
+						var BooleanEditor = new NSButton (new CGRect (0, top, 200, 24)) { TranslatesAutoresizingMaskIntoConstraints = false };
+						BooleanEditor.SetButtonType (NSButtonType.Switch);
+						BooleanEditor.Title = item;
+						BooleanEditor.Activated += SelectionChanged;
+
+						AddSubview (BooleanEditor);
+						combinableList.Add (BooleanEditor);
+						top += 24;
 					}
 
-					AddSubview (this.popUpButton);
-
-					this.DoConstraints (new[] {
-						popUpButton.ConstraintTo (this, (pub, c) => pub.Width == c.Width - 34),
-						popUpButton.ConstraintTo (this, (pub, c) => pub.Height == DefaultControlHeight + 1),
-						popUpButton.ConstraintTo (this, (pub, c) => pub.Left == pub.Left + 4),
-						popUpButton.ConstraintTo (this, (pub, c) => pub.Top == pub.Top + 0),
-					});
-
-					firstKeyView = this.popUpButton;
-					lastKeyView = this.popUpButton;
+					// Set our new RowHeight
+					RowHeight = top;
+					firstKeyView = combinableList.First ();
+					lastKeyView = combinableList.Last ();
 				} else {
 					this.comboBox.RemoveAll ();
 
@@ -133,10 +162,30 @@ namespace Xamarin.PropertyEditing.Mac
 			base.OnViewModelChanged (oldModel);
 		}
 
+		void SelectionChanged (object sender, EventArgs e)
+		{
+			if (EditorViewModel.IsCombinable) {
+				var tickedButtons = combinableList.Where (y => y.State == NSCellStateValue.On).Select (x => x.Title).ToList ();
+
+				EditorViewModel.ValueList = tickedButtons;
+			} else {
+				EditorViewModel.ValueName = comboBox.SelectedValue.ToString ();
+			}
+
+			dataPopulated = false;
+		}
+
 		protected override void UpdateValue ()
 		{
-			if (EditorViewModel.IsConstrainedToPredefined) {
-				this.popUpButton.Title = EditorViewModel.ValueName ?? String.Empty;
+			if (EditorViewModel.IsCombinable) {
+				foreach (var item in combinableList) {
+					if (EditorViewModel.ValueList.Count () > 0) {
+						item.State = EditorViewModel.ValueList.Contains (item.Title) ? NSCellStateValue.On : NSCellStateValue.Off;
+					}
+					else {
+						item.State = NSCellStateValue.Off;
+					}
+				}
 			} else {
 				this.comboBox.StringValue = EditorViewModel.ValueName ?? String.Empty;
 			}

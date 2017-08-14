@@ -48,7 +48,15 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type local:EnumEditorControl}">
-					<ComboBox x:Name="ComboBox" ItemsSource="{Binding PossibleValues}" SelectedItem="{Binding ValueName}" VerticalContentAlignment="Center" AutomationProperties.Name="{Binding Property.Name,Mode=OneTime}" />
+					<ListBox x:Name="ListBox" ItemsSource="{Binding PossibleValues}" SelectionMode="Single" SelectedItem="{Binding ValueName}" VerticalContentAlignment="Center" AutomationProperties.Name="{Binding Property.Name,Mode=OneTime}" IsEnabled="{Binding Property.CanWrite,Mode=OneTime}"/>
+					<ControlTemplate.Triggers>
+						<DataTrigger Binding="{Binding IsCombinable}" Value="False">
+							<Setter TargetName="ListBox" Property="SelectionMode" Value="Single"/>
+						</DataTrigger>
+						<DataTrigger Binding="{Binding IsCombinable}" Value="True">
+							<Setter TargetName="ListBox" Property="SelectionMode" Value="Multiple"/>
+						</DataTrigger>
+					</ControlTemplate.Triggers>
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>

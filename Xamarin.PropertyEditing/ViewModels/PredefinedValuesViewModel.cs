@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Cadenza.Collections;
 using Xamarin.PropertyEditing.Resources;
+using System.Threading.Tasks;
 
 namespace Xamarin.PropertyEditing.ViewModels
 {
@@ -14,9 +16,17 @@ namespace Xamarin.PropertyEditing.ViewModels
 		{
 			this.predefinedValues = property as IHavePredefinedValues<TValue>;
 			if (this.predefinedValues == null)
-				throw new ArgumentException (nameof(property) + " did not have predefined values", nameof(property));
+				throw new ArgumentException (nameof (property) + " did not have predefined values", nameof (property));
 
-			UpdateValueName();
+			if (IsCombinable)
+				UpdateValueList ();
+			else
+				UpdateValueName ();
+		}
+
+		public bool IsCombinable
+		{
+			get { return this.predefinedValues.IsValueCombinable; }
 		}
 
 		public IEnumerable<string> PossibleValues
@@ -38,23 +48,29 @@ namespace Xamarin.PropertyEditing.ViewModels
 						SetError (string.Format (LocalizationResources.InvalidValue, value)); 
 						return;
 					}
-
-					// TODO: Figure out where the conversion needs to happen
 				} else
 					Value = realValue;
 
-				this.valueName = value;
-				OnPropertyChanged ();
 			}
 		}
 
 		public bool IsConstrainedToPredefined => this.predefinedValues.IsConstrainedToPredefined;
 
 		// TODO: Combination (flags) values
+		List<string> valueList = new List<string> ();
+		public List<string> ValueList {
+			get { return this.valueList; }
+			set {
+				if (this.valueList == value)
+					return;
+				SetValueFromList (value);
+			}
+		}
 
+		// TODO: Combination (flags) values
 		protected override TValue ValidateValue (TValue validationValue)
 		{
-			if (!this.predefinedValues.IsConstrainedToPredefined || IsValueDefined (validationValue))
+			if (!IsConstrainedToPredefined || IsValueDefined (validationValue))
 				return validationValue;
 
 			return Value;
@@ -66,7 +82,10 @@ namespace Xamarin.PropertyEditing.ViewModels
 			if (this.predefinedValues == null)
 				return;
 
-			UpdateValueName();
+			if (IsCombinable) 
+				UpdateValueList ();
+			else
+				UpdateValueName ();
 		}
 
 		private string valueName;
@@ -87,7 +106,6 @@ namespace Xamarin.PropertyEditing.ViewModels
 					return true;
 				}
 			}
-
 			return false;
 		}
 
@@ -97,6 +115,34 @@ namespace Xamarin.PropertyEditing.ViewModels
 			if (TryGetValueName (Value, out newValueName)) {
 				this.valueName = newValueName;
 				OnPropertyChanged (nameof(ValueName));
+			}
+		}
+
+		void SetValueFromList (IEnumerable<string> tickedButtons)
+		{
+			var foundValues = this.predefinedValues.PredefinedValues.Where (x => tickedButtons.Contains (x.Key));
+			if (foundValues.Count () > 0) {
+				var valuelist = foundValues.Select (y => y.Value).ToList ();
+				var vi = new ValueInfo<IReadOnlyList<TValue>> () {
+					Source = ValueSource.Local,
+					Value = valuelist,
+				};
+				SetValue (vi);
+			} else {
+				if (IsConstrainedToPredefined) {
+					SetError ("Invalid value"); // TODO: Localize & improve
+				}
+			}
+		}
+
+		async Task UpdateValueList ()
+		{
+			var values = await GetValues ();
+			if (values != null) {
+				valueList.Clear ();
+				var range = this.predefinedValues.PredefinedValues.Where (x => values.Contains (x.Value)).Select (y => y.Key);
+				valueList.AddRange (range);
+				OnPropertyChanged (nameof (ValueList));
 			}
 		}
 	}
