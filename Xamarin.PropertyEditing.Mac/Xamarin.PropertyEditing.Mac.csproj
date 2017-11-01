@@ -78,6 +78,8 @@
       <DependentUpon>LocalizationResources.resx</DependentUpon>
     </Compile>
     <Compile Include="Controls\Custom\UnfocusableTextField.cs" />
+    <Compile Include="Controls\RatioEditorControl.cs" />
+    <Compile Include="Controls\Custom\RatioEditor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Controls\" />

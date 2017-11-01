@@ -373,4 +373,7 @@
   <data name="Unset" xml:space="preserve">
     <value>Unset</value>
   </data>
+  <data name="InvalidRatio" xml:space="preserve">
+    <value>Invalid Ratio</value>
+  </data>  
 </root>

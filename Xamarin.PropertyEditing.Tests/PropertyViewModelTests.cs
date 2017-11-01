@@ -368,7 +368,7 @@ namespace Xamarin.PropertyEditing.Tests
 
 			var editor = new MockObjectEditor (mockProperty.Object);
 			editor.ValueEvaluator = (info, o) => {
-				if (o == resource)
+				if ((Resource)o == resource)
 					return value;
 
 				return default(TValue);

@@ -16,7 +16,7 @@ namespace Xamarin.PropertyEditing.Mac
 		internal NumericSpinEditor YEditor { get; set; }
 
 		public override NSView FirstKeyView => XEditor;
-		public override NSView LastKeyView => YEditor;
+		public override NSView LastKeyView => YEditor.DecrementButton;
 
 		internal new PropertyViewModel<T> ViewModel
 		{

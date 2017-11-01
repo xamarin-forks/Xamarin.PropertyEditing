@@ -32,7 +32,7 @@ namespace Xamarin.PropertyEditing.Tests
 
 		private Exception unhandled;
 		[SetUp]
-		public void Setup ()
+		public virtual void Setup ()
 		{
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 		}

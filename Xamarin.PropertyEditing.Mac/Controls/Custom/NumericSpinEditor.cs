@@ -2,14 +2,31 @@
 using AppKit;
 using CoreGraphics;
 using Foundation;
+using Xamarin.PropertyEditing.Drawing;
 
 namespace Xamarin.PropertyEditing.Mac
 {
 	public class NumericSpinEditor : NSView
 	{
 		NumericTextField numericEditor;
-		NSStepper stepper;
-		bool editing;
+		public NumericTextField NumericEditor
+		{
+			get { return numericEditor; }
+		}
+
+		NSButton incrementButton;
+		public NSButton IncrementButton
+		{
+			get { return incrementButton; }
+		}
+		NSButton decrementButton;
+		public NSButton DecrementButton
+		{
+			get { return decrementButton; }
+		}
+
+
+		protected bool editing;
 
 		public event EventHandler ValueChanged;
 		public event EventHandler EditingEnded;
@@ -27,13 +44,9 @@ namespace Xamarin.PropertyEditing.Mac
 			set { ((NSTextFieldCell)numericEditor.Cell).PlaceholderString = value; }
 		}
 
-		NSStepper Stepper {
-			get { return stepper; }
-		}
-
 		public override CGSize IntrinsicContentSize {
 			get {
-				var baseSize = stepper.IntrinsicContentSize;
+				var baseSize = numericEditor.IntrinsicContentSize;
 				return new CGSize (baseSize.Width + 20, baseSize.Height);
 			}
 		}
@@ -57,34 +70,28 @@ namespace Xamarin.PropertyEditing.Mac
 		}
 
 		public double Value {
-			get { return stepper.DoubleValue; }
+			get { return numericEditor.DoubleValue; }
 			set { SetValue (value); }
 		}
 
-		public bool Wrap {
-			get { return stepper.ValueWraps; }
-			set { stepper.ValueWraps = value; }
-		}
-
 		public double MinimumValue {
-			get { return stepper.MinValue; }
+			get { return formatter.Minimum.DoubleValue; }
 			set {
-				stepper.MinValue = value;
 				formatter.Minimum = new NSNumber (value);
 			}
 		}
 
 		public double MaximumValue {
-			get { return stepper.MaxValue; }
+			get { return formatter.Maximum.DoubleValue; }
 			set {
-				stepper.MaxValue = value;
 				formatter.Maximum = new NSNumber (value);
 			}
 		}
 
+		double incrementValue = 1.0f;
 		public double IncrementValue {
-			get { return stepper.Increment; }
-			set { stepper.Increment = value; }
+			get { return incrementValue; }
+			set { incrementValue = value; }
 		}
 
 		public bool Enabled {
@@ -93,7 +100,8 @@ namespace Xamarin.PropertyEditing.Mac
 			}
 			set {
 				numericEditor.Enabled = value;
-				stepper.Enabled = value;
+				incrementButton.Enabled = value;
+				decrementButton.Enabled = value;
 			}
 		}
 
@@ -115,8 +123,6 @@ namespace Xamarin.PropertyEditing.Mac
 			set {
 				if (value)
 					numericEditor.StringValue = string.Empty;
-				else
-					numericEditor.DoubleValue = stepper.DoubleValue;
 			}
 		}
 
@@ -126,7 +132,8 @@ namespace Xamarin.PropertyEditing.Mac
 			}
 			set {
 				numericEditor.Editable = value;
-				stepper.Enabled = value;
+				incrementButton.Enabled = value;
+				decrementButton.Enabled = value;
 			}
 		}
 
@@ -137,9 +144,39 @@ namespace Xamarin.PropertyEditing.Mac
 			}
 		}
 
+		public bool AllowRatios
+		{
+			get {
+				return numericEditor.AllowRatios;
+			}
+			set {
+				numericEditor.AllowRatios = value;
+			}
+		}
+
+		public string StringValue
+		{
+			get { 
+				return numericEditor.StringValue; 
+			}
+			set {
+				numericEditor.StringValue = value;
+			}
+		}
+
 		protected virtual void OnConfigureNumericTextField ()
 		{
 			numericEditor.Formatter = formatter;
+		}
+
+		public bool AllowNegativeValues
+		{
+			get {
+				return numericEditor.AllowNegativeValues;
+			}
+			set {
+				numericEditor.AllowNegativeValues = value;
+			}
 		}
 
 		public virtual void Reset ()
@@ -151,10 +188,18 @@ namespace Xamarin.PropertyEditing.Mac
 			TranslatesAutoresizingMaskIntoConstraints = false;
 			var controlSize = NSControlSize.Small;
 
-			stepper = new NSStepper {
+			incrementButton = new NSButton {
+				BezelStyle = NSBezelStyle.Rounded,
+				ControlSize = NSControlSize.Mini,
+				Title = string.Empty,
 				TranslatesAutoresizingMaskIntoConstraints = false,
-				ValueWraps = false,
-				ControlSize = controlSize,
+			};
+
+			decrementButton = new NSButton {
+				BezelStyle = NSBezelStyle.Rounded,
+				ControlSize = NSControlSize.Mini,
+				Title = string.Empty,
+				TranslatesAutoresizingMaskIntoConstraints = false,
 			};
 
 			formatter = new NSNumberFormatter {
@@ -167,15 +212,13 @@ namespace Xamarin.PropertyEditing.Mac
 
 			numericEditor = new NumericTextField {
 				Alignment = NSTextAlignment.Right,
-				Formatter = formatter,
 				TranslatesAutoresizingMaskIntoConstraints = false,
 				Font = NSFont.FromFontName (PropertyEditorControl.DefaultFontName, PropertyEditorControl.DefaultFontSize),
 				ControlSize = controlSize,
 			};
 
-			stepper.Activated += (s, e) => {
-				OnStepperActivated (s, e);
-			};
+			incrementButton.Activated += (sender, e) => { IncrementNumericValue (); };
+			decrementButton.Activated += (sender, e) => { DecrementNumericValue (); };
 
 			numericEditor.KeyArrowUp += (sender, e) => { IncrementNumericValue (); };
 			numericEditor.KeyArrowDown += (sender, e) => { DecrementNumericValue (); };
@@ -184,62 +227,38 @@ namespace Xamarin.PropertyEditing.Mac
 				OnEditingEnded (s, e);
 			};
 
-			AddSubview (stepper);
 			AddSubview (numericEditor);
+			AddSubview (incrementButton);
+			AddSubview (decrementButton);
 
 			this.DoConstraints (new[] {
 				numericEditor.ConstraintTo (this, (n, c) => n.Width == c.Width - 16),
-				numericEditor.ConstraintTo (this, (n, c) => n.Height == 19),
-				stepper.ConstraintTo (numericEditor, (s, n) => s.Left == n.Right + 4),
-				stepper.ConstraintTo (numericEditor, (s, n) => s.Top == n.Top),
+				numericEditor.ConstraintTo (this, (n, c) => n.Height == PropertyEditorControl.DefaultControlHeight - 3),
+				incrementButton.ConstraintTo (numericEditor, (s, n) => s.Left == n.Right + 5),
+				incrementButton.ConstraintTo (numericEditor, (s, n) => s.Top == n.Top),
+				incrementButton.ConstraintTo (numericEditor, (s, n) => s.Width == 9),
+				incrementButton.ConstraintTo (numericEditor, (s, n) => s.Height == 9),
+				decrementButton.ConstraintTo (numericEditor, (s, n) => s.Left == n.Right + 5),
+				decrementButton.ConstraintTo (numericEditor, (s, n) => s.Top == n.Top + 10),
+				decrementButton.ConstraintTo (numericEditor, (s, n) => s.Width == 9),
+				decrementButton.ConstraintTo (numericEditor, (s, n) => s.Height == 9),
 			});
 		}
 
-		protected virtual void SetStepperActivated ()
-		{
-			SetValue (stepper.DoubleValue);
-		}
-
-		protected void OnStepperActivated (object sender, EventArgs e)
-		{
-			if (!editing) {
-				editing = true;
-				SetStepperActivated ();
-				if (ValueChanged != null)
-					ValueChanged (this, EventArgs.Empty);
-				editing = false;
-			}
-		}
-
-		protected void OnValueChanged (object sender, EventArgs e)
+		virtual protected void OnEditingEnded (object sender, EventArgs e)
 		{
 			if (!editing) {
 				editing = true;
 				SetValue (numericEditor.StringValue);
-				if (ValueChanged != null)
-					ValueChanged (this, EventArgs.Empty);
-				editing = false;
-			}
-		}
-
-		protected void OnEditingEnded (object sender, EventArgs e)
-		{
-			if (!editing) {
-				editing = true;
-				SetValue (numericEditor.StringValue);
-				if (EditingEnded != null)
-					EditingEnded (this, EventArgs.Empty);
-				if (ValueChanged != null)
-					ValueChanged (this, EventArgs.Empty);
+				EditingEnded?.Invoke (this, EventArgs.Empty);
 				editing = false;
 			}
 		}
 
 		void SetValue (string value)
 		{
-			//Regulates maximun and minium out of range
-			stepper.DoubleValue = CoerceValue (FieldValidation.FixInitialValue (value, Value.ToEditorString ()).ToEditorDouble ());
-			numericEditor.StringValue = FieldValidation.RoundDoubleValue (stepper.DoubleValue.ToEditorString (), NumericMode == ValidationType.Decimal ? FieldValidation.DefaultXcodeMaxRoundDigits : 0);
+			numericEditor.StringValue = value;
+			ValueChanged?.Invoke (this, EventArgs.Empty);
 		}
 
 		public void SetValue (double value)
@@ -247,21 +266,27 @@ namespace Xamarin.PropertyEditing.Mac
 			SetValue (value.ToString ());
 		}
 
-		protected double CoerceValue (double val)
-		{
-			return FieldValidation.CoerceValue (val, MinimumValue, MaximumValue);
-		}
-
 		public void IncrementNumericValue ()
 		{
-			SetValue (stepper.DoubleValue + IncrementValue);
-			OnStepperActivated (stepper, EventArgs.Empty);
+			if (!editing) {
+				editing = true;
+				SetIncrementOrDecrementValue (IncrementValue);
+				editing = false;
+			}
 		}
 
 		public void DecrementNumericValue ()
 		{
-			SetValue (stepper.DoubleValue - IncrementValue);
-			OnStepperActivated (stepper, EventArgs.Empty);
+			if (!editing) {
+				editing = true;
+				SetIncrementOrDecrementValue (-IncrementValue);
+				editing = false;
+			}
+		}
+
+		virtual protected void SetIncrementOrDecrementValue (double incrementValue)
+		{
+			SetValue (numericEditor.DoubleValue + incrementValue);
 		}
 	}
 }

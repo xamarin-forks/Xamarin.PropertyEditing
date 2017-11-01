@@ -18,7 +18,7 @@ namespace Xamarin.PropertyEditing.Mac
 		public NSTableView TableView { get; set; }
 
 		const int DefaultRowHeight = 22;
-		protected const int DefaultControlHeight = 22;
+		public const int DefaultControlHeight = 22;
 		public const int DefaultFontSize = 11;
 		public const int DefaultPropertyLabelFontSize = 11;
 		public const int DefaultDescriptionLabelFontSize = 10;

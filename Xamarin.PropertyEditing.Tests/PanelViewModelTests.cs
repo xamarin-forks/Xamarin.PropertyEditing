@@ -18,7 +18,7 @@ namespace Xamarin.PropertyEditing.Tests
 		: PropertiesViewModelTests
 	{
 		[SetUp]
-		public void Setup ()
+		public override void Setup ()
 		{
 			SynchronizationContext.SetSynchronizationContext (this.context = new TestContext ());
 		}
