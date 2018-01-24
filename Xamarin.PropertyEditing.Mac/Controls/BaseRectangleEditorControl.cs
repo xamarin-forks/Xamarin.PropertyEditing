@@ -9,7 +9,7 @@ using Xamarin.PropertyEditing.ViewModels;
 
 namespace Xamarin.PropertyEditing.Mac
 {
-	internal abstract class BaseRectangleEditorControl<T> : PropertyEditorControl
+	internal abstract class BaseRectangleEditorControl<T> : PropertyEditorControl<T>
 		where T : struct
 	{
 		protected UnfocusableTextField XLabel { get; set; }
@@ -23,11 +23,6 @@ namespace Xamarin.PropertyEditing.Mac
 
 		public override NSView FirstKeyView => XEditor;
 		public override NSView LastKeyView => HeightEditor;
-
-		internal new PropertyViewModel<T> ViewModel {
-			get { return (PropertyViewModel<T>)base.ViewModel; }
-			set { base.ViewModel = value; }
-		}
 
 		public BaseRectangleEditorControl ()
 		{

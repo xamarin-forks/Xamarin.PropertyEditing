@@ -7,7 +7,7 @@ using Xamarin.PropertyEditing.ViewModels;
 
 namespace Xamarin.PropertyEditing.Mac
 {
-	internal abstract class BasePointEditorControl<T> : PropertyEditorControl
+	internal abstract class BasePointEditorControl<T> : PropertyEditorControl<T>
 		where T : struct
 	{
 		internal UnfocusableTextField XLabel { get; set; }
@@ -17,12 +17,6 @@ namespace Xamarin.PropertyEditing.Mac
 
 		public override NSView FirstKeyView => XEditor;
 		public override NSView LastKeyView => YEditor;
-
-		internal new PropertyViewModel<T> ViewModel
-		{
-			get { return (PropertyViewModel<T>)base.ViewModel; }
-			set { base.ViewModel = value; }
-		}
 
 		public BasePointEditorControl ()
 		{

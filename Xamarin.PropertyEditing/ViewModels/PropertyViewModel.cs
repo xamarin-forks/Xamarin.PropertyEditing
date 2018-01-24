@@ -31,7 +31,11 @@ namespace Xamarin.PropertyEditing.ViewModels
 			RequestCurrentValueUpdate();
 		}
 
-		public ValueSource ValueSource => this.value != null ? this.value.Source : ValueSource.Default;
+		public override ValueSource ValueSource
+		{
+			get { return this.value != null ? this.value.Source : ValueSource.Default; }
+			internal set { this.value.Source = value; }
+		}
 
 		public TValue Value
 		{
@@ -319,6 +323,12 @@ namespace Xamarin.PropertyEditing.ViewModels
 		{
 			get;
 			protected set;
+		}
+
+		public abstract ValueSource ValueSource
+		{
+			get;
+			internal set;
 		}
 
 		public bool HasErrors => this.error != null;

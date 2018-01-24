@@ -12,8 +12,8 @@ using Xamarin.PropertyEditing.Mac.Resources;
 
 namespace Xamarin.PropertyEditing.Mac
 {
-	internal class PredefinedValuesEditor<T>
-		: PropertyEditorControl
+	internal class PredefinedValuesEditor<T> : PropertyEditorControl<T>
+		where T : struct
 	{
 		public PredefinedValuesEditor ()
 		{

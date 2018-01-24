@@ -85,6 +85,10 @@
     </Compile>
     <Compile Include="Controls\Custom\UnfocusableTextField.cs" />
     <Compile Include="Controls\CombinablePropertyEditor.cs" />
+    <Compile Include="Controls\Custom\PropertyButton.cs" />
+    <Compile Include="Controls\Custom\CommandMenuItem.cs" />
+    <Compile Include="Controls\Custom\BasePopOverControl.cs" />
+    <Compile Include="Controls\Custom\BasePopOverDataContextControl.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Controls\" />
