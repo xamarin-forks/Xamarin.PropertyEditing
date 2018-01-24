@@ -107,10 +107,10 @@ namespace Xamarin.PropertyEditing.ViewModels
 			}
 		}
 
-		public ValueSource ValueSource
+		public override ValueSource ValueSource
 		{
 			get { return this.valueSource; }
-			private set
+			internal set
 			{
 				if (this.valueSource == value)
 					return;

@@ -83,6 +83,9 @@ namespace Xamarin.PropertyEditing.Mac
 			SetEnabled ();
 			UpdateValue ();
 			UpdateAccessibilityValues ();
+
+			// Hook this up so we know when to reset values 
+			PropertyButton.ViewModel = viewModel;
 		}
 
 		protected virtual void OnPropertyChanged (object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -103,5 +106,14 @@ namespace Xamarin.PropertyEditing.Mac
 		protected abstract void SetEnabled ();
 
 		protected abstract void UpdateAccessibilityValues ();
+	}
+
+	internal abstract class PropertyEditorControl<T> : PropertyEditorControl
+	{
+		internal new PropertyViewModel<T> ViewModel
+		{
+			get { return (PropertyViewModel<T>)base.ViewModel; }
+			set { base.ViewModel = value; }
+		}
 	}
 }
