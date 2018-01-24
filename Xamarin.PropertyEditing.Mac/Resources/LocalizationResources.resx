@@ -59,4 +59,25 @@
 	<data name="ArrangeByLabel" xml:space="preserve">
 		<value>Arrange By:</value>
 	</data>
+    <data name="PropertyResetLabel" xml:space="preserve">
+        <value>Reset</value>
+    </data>
+    <data name="PropertyRequestResourceLabel" xml:space="preserve">
+        <value>Resource...</value>
+    </data>
+    <data name="PropertyCustomExpressionLabel" xml:space="preserve">
+        <value>Custom Expression...</value>
+    </data>
+    <data name="PropertyBindingToolTip" xml:space="preserve">
+        <value>Binding</value>
+    </data>
+    <data name="PropertyDefaultToolTip" xml:space="preserve">
+        <value>Default</value>
+    </data>
+    <data name="PropertyLocalToolTip" xml:space="preserve">
+        <value>Local</value>
+    </data>
+    <data name="PropertyResourceToolTip" xml:space="preserve">
+        <value>Resource</value>
+    </data>
 </root>
