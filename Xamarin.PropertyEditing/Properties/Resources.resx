@@ -451,4 +451,10 @@
   <data name="Binding" xml:space="preserve">
     <value>Binding</value>
   </data>
+  <data name="AllResources" xml:space="preserve">
+    <value>All Resources</value>
+  </data>
+  <data name="Shared" xml:space="preserve">
+    <value>Shared</value>
+  </data>
 </root>

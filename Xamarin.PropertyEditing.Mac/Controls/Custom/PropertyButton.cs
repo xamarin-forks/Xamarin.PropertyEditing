@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Input;
 using AppKit;
 using CoreGraphics;
@@ -15,11 +16,14 @@ namespace Xamarin.PropertyEditing.Mac
 		{
 			get { return viewModel; }
 			set {
-				if (viewModel != null)
+				if (viewModel != null) {
 					viewModel.PropertyChanged -= OnPropertyChanged;
+					viewModel.ResourceRequested -= OnResourceRequested;
+				}
 
 				viewModel = value;
 				viewModel.PropertyChanged += OnPropertyChanged;
+				viewModel.ResourceRequested += OnResourceRequested;
 
 				// No point showing myself if you can't do anything with me.
 				Hidden = !viewModel.Property.CanWrite;
@@ -48,6 +52,9 @@ namespace Xamarin.PropertyEditing.Mac
 
 					// TODO If we add more menu items consider making the Label/Command a dictionary that we can iterate over to populate everything.
 					this.popUpContextMenu.AddItem (new CommandMenuItem (Properties.Resources.Reset, viewModel.ClearValueCommand));
+
+					if (this.viewModel.SupportsResources && viewModel.Property.CanWrite)
+						this.popUpContextMenu.AddItem (new CommandMenuItem (Properties.Resources.ResourceEllipsis, viewModel.RequestResourceCommand));
 				}
 
 				var menuOrigin = this.Superview.ConvertPointToView (new CGPoint (Frame.Location.X - 1, Frame.Location.Y + Frame.Size.Height + 4), null);
@@ -97,6 +104,22 @@ namespace Xamarin.PropertyEditing.Mac
 			if (e.PropertyName == "ValueSource") {
 				ValueSourceChanged (viewModel.ValueSource);
 			}
+		}
+
+		internal void OnResourceRequested (object sender, ResourceRequestedEventArgs e)
+		{
+			var resourceSelectorView = new ResourceSelectorView (viewModel);
+
+			/*resourceSelectorView.ItemSelected += (sender1, e1) => {
+				e.Resource = resourceSelectorView.SelectedResource;
+			};*/
+
+			var resourceSelectorPopOver = new NSPopover {
+				Behavior = NSPopoverBehavior.Semitransient,
+				ContentViewController = new NSViewController (null, null) { View = resourceSelectorView },
+			};
+
+			resourceSelectorPopOver.Show (resourceSelectorView.Frame, this, NSRectEdge.MinYEdge);
 		}
 	}
 }

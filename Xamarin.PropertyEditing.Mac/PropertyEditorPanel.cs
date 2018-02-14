@@ -6,6 +6,7 @@ using Foundation;
 using AppKit;
 using Xamarin.PropertyEditing.ViewModels;
 using Xamarin.PropertyEditing.Mac.Resources;
+using System.ComponentModel;
 
 namespace Xamarin.PropertyEditing.Mac
 {
@@ -221,6 +222,48 @@ namespace Xamarin.PropertyEditing.Mac
 		void UpdateTheme ()
 		{
 			this.Appearance = ThemeManager.CurrentAppearance;
+		}
+
+		IResourceProvider resourceProvider;
+		public IResourceProvider ResourceProvider
+		{
+			get { return resourceProvider; }
+			set
+			{
+				if (resourceProvider != value) {
+					resourceProvider = value;
+					OnResourceProviderChanged ();
+				}
+			}
+		}
+
+		TargetPlatform targetPlatform = TargetPlatform.Default;
+		public TargetPlatform TargetPlatform
+		{
+			get { return targetPlatform; }
+			set
+			{
+				targetPlatform = value;
+			}
+		}
+		private void OnResourceProviderChanged ()
+		{
+			if (this.viewModel != null)
+				this.viewModel.PropertyChanged -= OnVmPropertyChanged;
+
+
+			if (EditorProvider != null) {
+				this.viewModel.ResourceProvider = this.resourceProvider;
+			}
+
+			if (this.viewModel != null)
+				this.viewModel.PropertyChanged += OnVmPropertyChanged;
+		}
+
+		private void OnVmPropertyChanged (object sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof (PanelViewModel.ArrangeMode))
+				OnArrageModeChanged (sender, e);
 		}
 
 		class FirstResponderOutlineView : NSOutlineView

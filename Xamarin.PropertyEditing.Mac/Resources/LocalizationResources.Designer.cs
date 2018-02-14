@@ -118,47 +118,5 @@ namespace Xamarin.PropertyEditing.Mac.Resources {
                 return ResourceManager.GetString("ArrangeByLabel", resourceCulture);
             }
         }
-        
-        internal static string PropertyResetLabel {
-            get {
-                return ResourceManager.GetString("PropertyResetLabel", resourceCulture);
-            }
-        }
-        
-        internal static string PropertyRequestResourceLabel {
-            get {
-                return ResourceManager.GetString("PropertyRequestResourceLabel", resourceCulture);
-            }
-        }
-        
-        internal static string PropertyCustomExpressionLabel {
-            get {
-                return ResourceManager.GetString("PropertyCustomExpressionLabel", resourceCulture);
-            }
-        }
-        
-        internal static string PropertyBindingToolTip {
-            get {
-                return ResourceManager.GetString("PropertyBindingToolTip", resourceCulture);
-            }
-        }
-        
-        internal static string PropertyDefaultToolTip {
-            get {
-                return ResourceManager.GetString("PropertyDefaultToolTip", resourceCulture);
-            }
-        }
-        
-        internal static string PropertyLocalToolTip {
-            get {
-                return ResourceManager.GetString("PropertyLocalToolTip", resourceCulture);
-            }
-        }
-        
-        internal static string PropertyResourceToolTip {
-            get {
-                return ResourceManager.GetString("PropertyResourceToolTip", resourceCulture);
-            }
-        }
     }
 }

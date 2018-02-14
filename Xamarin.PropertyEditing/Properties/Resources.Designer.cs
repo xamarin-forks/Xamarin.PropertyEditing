@@ -628,5 +628,17 @@ namespace Xamarin.PropertyEditing.Properties {
                 return ResourceManager.GetString("Binding", resourceCulture);
             }
         }
+        
+        public static string AllResources {
+            get {
+                return ResourceManager.GetString("AllResources", resourceCulture);
+            }
+        }
+        
+        public static string Shared {
+            get {
+                return ResourceManager.GetString("Shared", resourceCulture);
+            }
+        }
     }
 }

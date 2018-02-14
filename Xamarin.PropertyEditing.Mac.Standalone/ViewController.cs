@@ -19,6 +19,7 @@ namespace Xamarin.PropertyEditing.Mac.Standalone
 			// Do any additional setup after loading the view.
 
 			PropertyPanel.EditorProvider = new MockEditorProvider ();
+			PropertyPanel.ResourceProvider = new MockResourceProvider ();
 		}
 
 		public override NSObject RepresentedObject {
