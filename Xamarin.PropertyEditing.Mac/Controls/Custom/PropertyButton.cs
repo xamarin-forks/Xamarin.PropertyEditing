@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Windows.Input;
 using AppKit;
 using CoreGraphics;
 using Xamarin.PropertyEditing.ViewModels;
@@ -15,11 +14,14 @@ namespace Xamarin.PropertyEditing.Mac
 		{
 			get { return viewModel; }
 			set {
-				if (viewModel != null)
+				if (viewModel != null) {
 					viewModel.PropertyChanged -= OnPropertyChanged;
+					viewModel.CustomExpressionRequested -= OnCustomExpression;
+				}
 
 				viewModel = value;
 				viewModel.PropertyChanged += OnPropertyChanged;
+				viewModel.CustomExpressionRequested += OnCustomExpression;
 
 				// No point showing myself if you can't do anything with me.
 				Hidden = !viewModel.Property.CanWrite;
@@ -47,7 +49,10 @@ namespace Xamarin.PropertyEditing.Mac
 					this.popUpContextMenu = new NSMenu ();
 
 					// TODO If we add more menu items consider making the Label/Command a dictionary that we can iterate over to populate everything.
-					this.popUpContextMenu.AddItem (new CommandMenuItem (Properties.Resources.Reset, viewModel.ClearValueCommand));
+					this.popUpContextMenu.AddItem (new CommandMenuItem (Properties.Resources.Reset, viewModel.ClearValueCommand, this));
+
+					if (this.viewModel.TargetPlatform.SupportsCustomExpressions)
+						this.popUpContextMenu.AddItem (new CommandMenuItem (Properties.Resources.CustomExpressionEllipsis, viewModel.CustomExpressionCommand, this));
 				}
 
 				var menuOrigin = this.Superview.ConvertPointToView (new CGPoint (Frame.Location.X - 1, Frame.Location.Y + Frame.Size.Height + 4), null);
@@ -97,6 +102,18 @@ namespace Xamarin.PropertyEditing.Mac
 			if (e.PropertyName == "ValueSource") {
 				ValueSourceChanged (viewModel.ValueSource);
 			}
+		}
+
+		private void OnCustomExpression (object sender, EventArgs e)
+		{
+			var customExpressionView = new CustomExpressionView (viewModel);
+
+			var customExpressionPopOver = new NSPopover {
+				Behavior = NSPopoverBehavior.Semitransient,
+				ContentViewController = new NSViewController (null, null) { View = customExpressionView },
+			};
+
+			customExpressionPopOver.Show (customExpressionView.Frame, (NSView)sender, NSRectEdge.MinYEdge);
 		}
 	}
 }

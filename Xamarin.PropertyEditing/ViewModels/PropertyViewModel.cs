@@ -267,10 +267,12 @@ namespace Xamarin.PropertyEditing.ViewModels
 			SetupConstraints ();
 
 			this.requestResourceCommand = new RelayCommand (OnRequestResource, CanRequestResource);
+			this.customExpressionCommand = new RelayCommand<object> (OnCustomExpression, CanCustomExpression);
 		}
 
 		public event EventHandler<ResourceRequestedEventArgs> ResourceRequested;
 		public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+		public event EventHandler<EventArgs> CustomExpressionRequested;
 
 		public IPropertyInfo Property
 		{
@@ -348,6 +350,8 @@ namespace Xamarin.PropertyEditing.ViewModels
 			get;
 			protected set;
 		}
+
+		public ICommand CustomExpressionCommand => this.customExpressionCommand;
 
 		public abstract ValueSource ValueSource
 		{
@@ -428,6 +432,7 @@ namespace Xamarin.PropertyEditing.ViewModels
 		private IResourceProvider resourceProvider;
 		private ICommand setValueResourceCommand;
 		private RelayCommand requestResourceCommand;
+		private RelayCommand<object> customExpressionCommand;
 		private HashSet<IPropertyInfo> constraintProperties;
 		private PropertyVariation variation;
 		private string error;
@@ -509,6 +514,16 @@ namespace Xamarin.PropertyEditing.ViewModels
 		private void OnSetValueResourceCommandCanExecuteChanged (object sender, EventArgs e)
 		{
 			this.requestResourceCommand.ChangeCanExecute();
+		}
+
+		private bool CanCustomExpression (object parameter)
+		{
+			return this.TargetPlatform.SupportsCustomExpressions;
+		}
+
+		private void OnCustomExpression (object parameter)
+		{
+			CustomExpressionRequested?.Invoke (parameter, EventArgs.Empty);
 		}
 	}
 }
