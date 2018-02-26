@@ -118,5 +118,11 @@ namespace Xamarin.PropertyEditing.Mac.Resources {
                 return ResourceManager.GetString("ArrangeByLabel", resourceCulture);
             }
         }
+        
+        internal static string PropertyErrorsLabel {
+            get {
+                return ResourceManager.GetString("PropertyErrorsLabel", resourceCulture);
+            }
+        }
     }
 }

@@ -64,9 +64,7 @@ namespace Xamarin.PropertyEditing.Mac
 
 			actionButton.Activated += (object sender, EventArgs e) => {
 				if (errorList != null) {
-					var Container = new ErrorMessageView (errorList) {
-						Frame = new CGRect (CGPoint.Empty, new CGSize (320, 200))
-					};
+					var Container = new ErrorMessageView (errorList);
 
 					var errorMessagePopUp = new NSPopover {
 						Behavior = NSPopoverBehavior.Semitransient,

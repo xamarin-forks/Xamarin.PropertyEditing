@@ -59,4 +59,7 @@
 	<data name="ArrangeByLabel" xml:space="preserve">
 		<value>Arrange By:</value>
 	</data>
+    <data name="PropertyErrorsLabel" xml:space="preserve">
+        <value>Property Errors</value>
+    </data>
 </root>
