@@ -15,7 +15,7 @@ namespace Xamarin.PropertyEditing.Mac
 		{
 			base.TranslatesAutoresizingMaskIntoConstraints = false;
 
-			NumericEditor = new NumericSpinEditor ();
+			NumericEditor = new NumericSpinEditor<T> ();
 			NumericEditor.ValueChanged += OnValueChanged;
 
 			TypeCode code = Type.GetTypeCode (typeof (T));
@@ -41,7 +41,7 @@ namespace Xamarin.PropertyEditing.Mac
 			});
 		}
 
-		protected NumericSpinEditor NumericEditor { get; set; }
+		protected NumericSpinEditor<T> NumericEditor { get; set; }
 
 		protected NSNumberFormatter Formatter {
 			get {
@@ -61,6 +61,12 @@ namespace Xamarin.PropertyEditing.Mac
 			set {
 				NumericEditor.NumberStyle = value;
 			}
+		}
+
+		internal new NumericPropertyViewModel<T?> ViewModel
+		{
+			get { return (NumericPropertyViewModel<T?>)base.ViewModel; }
+			set { base.ViewModel = value; }
 		}
 
 		protected override void UpdateErrorsDisplayed (IEnumerable errors)
@@ -85,12 +91,12 @@ namespace Xamarin.PropertyEditing.Mac
 
 		protected virtual void OnValueChanged (object sender, EventArgs e)
 		{
-			((PropertyViewModel<T>)ViewModel).Value = (T)Convert.ChangeType (NumericEditor.Value, typeof(T));
+			ViewModel.Value = (T)Convert.ChangeType (NumericEditor.Value, typeof(T));
 		}
 
 		protected override void UpdateValue()
 		{
-			NumericEditor.Value = (double)Convert.ChangeType (((PropertyViewModel<T>)ViewModel).Value, typeof(double));
+			NumericEditor.Value = (double)Convert.ChangeType ((ViewModel).Value, typeof(double));
 		}
 
 		protected override void UpdateAccessibilityValues ()

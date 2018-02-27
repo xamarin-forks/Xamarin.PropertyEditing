@@ -89,7 +89,6 @@ namespace Xamarin.PropertyEditing.Mac
 					}
 
 					// we must reset these every time, as the view may have been reused
-					editor.ViewModel = vm;
 					editor.TableRow = outlineView.RowForItem (item);
 
 					// Force a row update due to new height, but only when we are non-default
@@ -109,23 +108,30 @@ namespace Xamarin.PropertyEditing.Mac
 			Type propertyType = vm.GetType ();
 			if (!ViewModelTypes.TryGetValue (propertyType, out controlType)) {
 				if (propertyType.IsConstructedGenericType) {
-					genericArgs = propertyType.GetGenericArguments ();
+					genericArgs = GetCorrectGenericArguments (propertyType.GetGenericArguments ());
 					propertyType = propertyType.GetGenericTypeDefinition ();
 					ViewModelTypes.TryGetValue (propertyType, out controlType);
 				}
 			}
 
-			if (controlType == null)
+			if (controlType != null) {
+				if (controlType.IsGenericTypeDefinition) {
+					controlType = controlType.MakeGenericType (genericArgs);
+				}
+
+				return SetUpEditor (controlType, vm, outlineView);
+			} else
 				return null;
+		}
 
-			if (controlType.IsGenericTypeDefinition) {
-				if (genericArgs == null)
-					genericArgs = propertyType.GetGenericArguments ();
-
-				controlType = controlType.MakeGenericType (genericArgs);
+		private Type[] GetCorrectGenericArguments (Type[] types)
+		{
+			for (int i = 0; i < types.Length; i++) {
+				if (types[i].IsGenericType && types[i].GetGenericTypeDefinition () == typeof (Nullable<>)) {
+					types[i] = Nullable.GetUnderlyingType (types[i]);
+				}
 			}
-
-			return SetUpEditor (controlType, vm, outlineView);
+			return types;
 		}
 
 		public override bool ShouldSelectItem (NSOutlineView outlineView, NSObject item)
@@ -180,26 +186,25 @@ namespace Xamarin.PropertyEditing.Mac
 			var view = (PropertyEditorControl)Activator.CreateInstance (controlType);
 			view.Identifier = property.GetType ().Name;
 			view.TableView = outline;
+			view.ViewModel = (PropertyViewModel)property;
 
 			return view;
 		}
 
 		private static readonly Dictionary<Type, Type> ViewModelTypes = new Dictionary<Type, Type> {
 			{typeof (StringPropertyViewModel), typeof (StringEditorControl)},
-			{typeof (NumericPropertyViewModel<int>), typeof (NumericEditorControl<>)},
-			{typeof (NumericPropertyViewModel<long>), typeof (NumericEditorControl<>)},
-			{typeof (NumericPropertyViewModel<float>), typeof (NumericEditorControl<>)},
-			{typeof (NumericPropertyViewModel<double>), typeof (NumericEditorControl<>)},
-			{typeof (PropertyViewModel<bool>), typeof (BooleanEditorControl)},
+			{typeof (NumericPropertyViewModel<>), typeof (NumericEditorControl<>)},
+			{typeof (PropertyViewModel<bool?>), typeof (BooleanEditorControl)},
+			{typeof (PredefinedValuesViewModel<>), typeof(PredefinedValuesEditor<>)},
+			{typeof (CombinablePropertyViewModel<>), typeof(CombinablePropertyEditor<>)},
 			{typeof (PropertyViewModel<CoreGraphics.CGPoint>), typeof (CGPointEditorControl)},
 			{typeof (PropertyViewModel<CoreGraphics.CGRect>), typeof (CGRectEditorControl)},
-			{typeof (PredefinedValuesViewModel<>), typeof(PredefinedValuesEditor<>)},
 			{typeof (PropertyViewModel<CoreGraphics.CGSize>), typeof (CGSizeEditorControl)},
-			{typeof (PropertyViewModel<Point>), typeof (SystemPointEditorControl)},
 			{typeof (PointPropertyViewModel), typeof (CommonPointEditorControl) },
-			{typeof (PropertyViewModel<Size>), typeof (SystemSizeEditorControl)},
-			{typeof (SizePropertyViewModel), typeof (CommonSizeEditorControl) },
 			{typeof (RectanglePropertyViewModel), typeof (CommonRectangleEditorControl) },
+			{typeof (SizePropertyViewModel), typeof (CommonSizeEditorControl) },
+			{typeof (PropertyViewModel<Point>), typeof (SystemPointEditorControl)},
+			{typeof (PropertyViewModel<Size>), typeof (SystemSizeEditorControl)},
 			{typeof (PropertyViewModel<Rectangle>), typeof (SystemRectangleEditorControl)}
 		};
 	}
