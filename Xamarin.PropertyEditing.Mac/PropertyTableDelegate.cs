@@ -17,6 +17,11 @@ namespace Xamarin.PropertyEditing.Mac
 		public PropertyTableDelegate (PropertyTableDataSource datasource)
 		{
 			this.dataSource = datasource;
+
+			// Add the Mac specific mappings
+			PropertiesViewModel.ViewModelMap.Add (typeof (CoreGraphics.CGPoint), (tp, p, e) => new PropertyViewModel<CoreGraphics.CGPoint> (tp, p, e));
+			PropertiesViewModel.ViewModelMap.Add (typeof (CoreGraphics.CGSize), (tp, p, e) => new PropertyViewModel<CoreGraphics.CGSize> (tp, p, e));
+			PropertiesViewModel.ViewModelMap.Add (typeof (CoreGraphics.CGRect), (tp, p, e) => new PropertyViewModel<CoreGraphics.CGRect> (tp, p, e));
 		}
 
 		public void UpdateExpansions (NSOutlineView outlineView)
