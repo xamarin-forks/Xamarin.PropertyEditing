@@ -84,6 +84,8 @@
       <DependentUpon>LocalizationResources.resx</DependentUpon>
     </Compile>
     <Compile Include="Controls\Custom\UnfocusableTextField.cs" />
+    <Compile Include="Controls\Custom\BasePopOverControl.cs" />
+    <Compile Include="Controls\Custom\BasePopOverViewModelControl.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Controls\" />
